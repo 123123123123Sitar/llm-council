@@ -11,15 +11,17 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # Council members - list of OpenRouter model identifiers
 # Council members - list of OpenRouter model identifiers
+# Council members - list of OpenRouter model identifiers
+# Using free/cheap models to ensures it works for all users
 COUNCIL_MODELS = [
-    "openai/gpt-4o",
-    "google/gemini-pro-1.5",
-    "anthropic/claude-3.5-sonnet",
-    "meta-llama/llama-3.1-405b-instruct",
+    "google/gemini-2.0-flash-exp:free",
+    "meta-llama/llama-3.2-11b-vision-instruct:free",
+    "microsoft/phi-3-medium-128k-instruct:free",
+    "google/gemini-flash-1.5",
 ]
 
 # Chairman model - synthesizes final response
-CHAIRMAN_MODEL = "google/gemini-pro-1.5"
+CHAIRMAN_MODEL = "google/gemini-2.0-flash-exp:free"
 
 # OpenRouter API endpoint
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
