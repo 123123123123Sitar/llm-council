@@ -9,11 +9,29 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 try:
     from backend.main import app
-except Exception as exc:
+except BaseException as exc:
     # If import fails, create a fallback app to report the error
     app = FastAPI()
     
-    error_msg = f"Startup Error: {type(exc).__name__}: {str(exc)}\n\n{traceback.format_exc()}"
+    import sys
+    import os
+    
+    # Gather diagnostic info
+    cwd_files = []
+    for root, dirs, files in os.walk("."):
+        for f in files:
+            cwd_files.append(os.path.join(root, f))
+            if len(cwd_files) > 50: break
+    
+    error_msg = f"""Startup Error: {type(exc).__name__}: {str(exc)}
+    
+Python: {sys.version}
+CWD: {os.getcwd()}
+Path: {sys.path}
+Files: {cwd_files}
+
+Traceback:
+{traceback.format_exc()}"""
     
     @app.api_route("/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE"])
     async def catch_all(path_name: str):
