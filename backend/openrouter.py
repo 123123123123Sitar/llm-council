@@ -17,9 +17,50 @@ async def query_model(
         model: OpenRouter model identifier (e.g., "openai/gpt-4o")
         messages: List of message dicts with 'role' and 'content' (str or list)
         timeout: Request timeout in seconds
-    # ... (rest of docstring)
+    
+    Returns:
+        Dict with 'role' and 'content', or None if failed
     """
-    # ... (rest of function body)
+    
+    if not OPENROUTER_API_KEY:
+        print(f"Error: OPENROUTER_API_KEY is not set")
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "https://github.com/Start-Impulse/llm-council",
+        "X-Title": "LLM Council",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": model,
+        "messages": messages
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                OPENROUTER_API_URL,
+                json=payload,
+                headers=headers,
+                timeout=timeout
+            )
+            
+            if response.status_code != 200:
+                print(f"Error querying {model}: {response.status_code} - {response.text}")
+                return None
+            
+            data = response.json()
+            if not data or 'choices' not in data or not data['choices']:
+                print(f"Error querying {model}: Invalid response format - {data}")
+                return None
+                
+            return data["choices"][0]["message"]
+            
+    except Exception as e:
+        print(f"Exception querying {model}: {e}")
+        return None
 
 
 async def query_models_parallel(
