@@ -72,6 +72,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
           )}
       </div>
 
+      {/* Aggregate rankings hidden per user request
       {aggregateRankings && aggregateRankings.length > 0 && (
         <div className="aggregate-rankings">
           <h4>Aggregate Rankings (Street Cred)</h4>
@@ -96,6 +97,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
           </div>
         </div>
       )}
+      */}
     </div>
   );
 }

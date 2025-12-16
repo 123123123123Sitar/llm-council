@@ -13,7 +13,7 @@ export default function Stage1({ responses }) {
     <div className="stage stage1">
       <h3 className="stage-title">Stage 1: Individual Responses</h3>
 
-      <div className="tabs">
+      <div className="tabs" style={{ display: 'none' }}>
         {responses.map((resp, index) => (
           <button
             key={index}
@@ -26,7 +26,7 @@ export default function Stage1({ responses }) {
       </div>
 
       <div className="tab-content">
-        <div className="model-name">{responses[activeTab].model}</div>
+        <div className="model-name" style={{ display: 'none' }}>{responses[activeTab].model}</div>
         <div className="response-text markdown-content">
           <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
         </div>
