@@ -324,17 +324,40 @@ async def run_full_council(
         }, {}
 
     # Stage 2: Collect rankings (uses text query for context)
-    stage2_results, label_to_model = await stage2_collect_rankings(text_query, stage1_results)
+    # OPTIMIZATION: If only 1 result, skip ranking (redundant) and skip synthesis (redundant)
+    if len(stage1_results) == 1:
+        # Create dummy stage 2 result
+        model_name = stage1_results[0]['model']
+        stage2_results = [{
+            "model": model_name,
+            "ranking": "FINAL RANKING:\n1. Response A",
+            "parsed_ranking": ["Response A"]
+        }]
+        label_to_model = {"Response A": model_name}
+        
+        # Skip Stage 3 Synthesis and just use the Stage 1 response
+        stage3_result = {
+            "model": CHAIRMAN_MODEL,
+            "response": stage1_results[0]['response']
+        }
+        
+        aggregate_rankings = [{
+            "model": model_name,
+            "average_rank": 1.0,
+            "rankings_count": 1
+        }]
+    else:
+        stage2_results, label_to_model = await stage2_collect_rankings(text_query, stage1_results)
 
-    # Calculate aggregate rankings
-    aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
+        # Calculate aggregate rankings
+        aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
 
-    # Stage 3: Synthesize final answer (uses text query for context)
-    stage3_result = await stage3_synthesize_final(
-        text_query,
-        stage1_results,
-        stage2_results
-    )
+        # Stage 3: Synthesize final answer (uses text query for context)
+        stage3_result = await stage3_synthesize_final(
+            text_query,
+            stage1_results,
+            stage2_results
+        )
 
     # Prepare metadata
     metadata = {
