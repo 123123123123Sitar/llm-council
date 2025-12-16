@@ -35,13 +35,15 @@ async def query_model(
 
     payload = {
         "model": model,
-        "messages": messages
+        "messages": messages,
+        "stop": ["</s>", "[/INST]", "[/OUT]", "<|im_end|>", "[INST]"]  # Stop tokens for common models
     }
 
     retries = 3
     base_delay = 2
 
     for attempt in range(retries):
+        print(f"DEBUG: Sending request to {model}...")
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -50,6 +52,7 @@ async def query_model(
                     headers=headers,
                     timeout=timeout
                 )
+                print(f"DEBUG: Response from {model}: {response.status_code}")
                 
                 if response.status_code == 429:
                     if attempt < retries - 1:

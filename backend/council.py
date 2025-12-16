@@ -284,8 +284,11 @@ Title:"""
     title = response.get('content', 'New Conversation').strip()
 
     # Clean up the title - remove quotes, limit length
-    title = title.strip('"\'')
-
+    import re
+    # Remove common raw tokens and artifacts
+    title = re.sub(r'<\/?s>|\[/?OUT\]|\[/?INST\]|###|Answer:', '', title, flags=re.IGNORECASE)
+    title = title.strip('"\' \n\t')
+    
     # Truncate if too long
     if len(title) > 50:
         title = title[:47] + "..."
