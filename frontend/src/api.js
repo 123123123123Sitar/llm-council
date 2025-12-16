@@ -99,7 +99,7 @@ export const api = {
    * @returns {Promise<void>}
    */
   async sendMessageStream(conversationId, content, images, onChunk) {
-    const response = await fetch(`${API_BASE}/conversations/${conversationId}/message/stream`, {
+    const response = await fetch(`${API_BASE}/api/conversations/${conversationId}/message/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, images }),
@@ -139,7 +139,7 @@ export const api = {
   },
 
   async deleteConversation(id) {
-    const response = await fetch(`${API_BASE}/conversations/${id}`, {
+    const response = await fetch(`${API_BASE}/api/conversations/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete conversation');
