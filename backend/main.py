@@ -14,6 +14,23 @@ from .council import run_full_council, generate_conversation_title, stage1_colle
 
 app = FastAPI(title="LLM Council API")
 
+# DEBUG: Global exception handler to return error details in JSON
+# This helps debug Vercel 500 errors without access to logs
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    error_msg = f"{type(exc).__name__}: {str(exc)}\n\n{traceback.format_exc()}"
+    print(error_msg)  # Log to console/stderr
+    return JSONResponse(
+        status_code=500,
+        content={"detail": error_msg}
+    )
+
+# Enable CORS for local development
+
 # Enable CORS for local development
 app.add_middleware(
     CORSMiddleware,

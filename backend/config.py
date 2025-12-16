@@ -1,6 +1,7 @@
 """Configuration for the LLM Council."""
 
 import os
+import tempfile
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,8 +25,9 @@ OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Data directory for conversation storage
 # Data directory for conversation storage
-# On Vercel, use /tmp as it's the only writable directory
+# Default to local data directory
+DATA_DIR = "data/conversations"
+
+# If we are on Vercel (or if the local data dir is not writable), use temp dir
 if os.getenv("VERCEL"):
-    DATA_DIR = "/tmp/data/conversations"
-else:
-    DATA_DIR = "data/conversations"
+    DATA_DIR = os.path.join(tempfile.gettempdir(), "data", "conversations")
