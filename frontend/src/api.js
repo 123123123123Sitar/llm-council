@@ -95,33 +95,23 @@ export const api = {
    * @param {string} conversationId - The conversation ID
    * @param {string} content - The message content
    * @param {string[]} [images] - Optional array of base64 image strings
-   * @param {function} onEvent - Callback function for each event
+   * @param {function} onChunk - Callback function for each event
    * @returns {Promise<void>}
    */
-  async sendMessageStream(conversationId, content, images = [], onEvent) {
-    if (typeof images === 'function') {
-      onEvent = images;
-      images = [];
-    }
-
-    const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}/message/stream`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, images }),
-      }
-    );
+  async sendMessageStream(conversationId, content, images, onChunk) {
+    const response = await fetch(`${API_BASE}/conversations/${conversationId}/message/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, images }),
+    });
 
     if (!response.ok) {
-      const text = await response.text();
+      let errorText = await response.text();
       try {
-        const err = JSON.parse(text);
-        throw new Error(err.detail || 'Failed to send message');
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.detail || 'Server error');
       } catch (e) {
-        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+        throw new Error(`Server Error (${response.status}): ${errorText}`);
       }
     }
 
@@ -137,15 +127,24 @@ export const api = {
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
-          const data = line.slice(6);
           try {
-            const event = JSON.parse(data);
-            onEvent(event.type, event);
+            const data = JSON.parse(line.slice(6));
+            onChunk(data);
           } catch (e) {
-            console.error('Failed to parse SSE event:', e);
+            console.error('Error parsing SSE data:', e);
           }
         }
       }
     }
   },
+
+  async deleteConversation(id) {
+    const response = await fetch(`${API_BASE}/conversations/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete conversation');
+    return await response.json();
+  },
 };
+
+export default api;

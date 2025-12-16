@@ -101,35 +101,29 @@ export default function ChatInterface({
                 <div className="assistant-message">
                   <div className="message-label">LLM Council</div>
 
-                  {/* Stage 1 */}
+                  {/* Stage 1 - Hidden per user request */}
                   {msg.loading?.stage1 && (
                     <div className="stage-loading">
                       <div className="spinner"></div>
-                      <span>Running Stage 1: Collecting individual responses...</span>
+                      <span>Thinking... (Collecting individual responses)</span>
                     </div>
                   )}
-                  {msg.stage1 && <Stage1 responses={msg.stage1} />}
+                  {/* msg.stage1 is computed but not shown */}
 
-                  {/* Stage 2 */}
+                  {/* Stage 2 - Hidden per user request */}
                   {msg.loading?.stage2 && (
                     <div className="stage-loading">
                       <div className="spinner"></div>
-                      <span>Running Stage 2: Peer rankings...</span>
+                      <span>Thinking... (Peer rankings)</span>
                     </div>
                   )}
-                  {msg.stage2 && (
-                    <Stage2
-                      rankings={msg.stage2}
-                      labelToModel={msg.metadata?.label_to_model}
-                      aggregateRankings={msg.metadata?.aggregate_rankings}
-                    />
-                  )}
+                  {/* msg.stage2 is computed but not shown */}
 
-                  {/* Stage 3 */}
+                  {/* Stage 3 - Final Answer */}
                   {msg.loading?.stage3 && (
                     <div className="stage-loading">
                       <div className="spinner"></div>
-                      <span>Running Stage 3: Final synthesis...</span>
+                      <span>Thinking... (Final synthesis)</span>
                     </div>
                   )}
                   {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}

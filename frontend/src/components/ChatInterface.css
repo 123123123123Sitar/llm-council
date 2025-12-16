@@ -52,14 +52,43 @@
 }
 
 .user-message .message-content {
-  background: #f0f7ff;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #d0e7ff;
-  color: #333;
-  line-height: 1.6;
+  background: #007AFF;
+  /* Apple Blue */
+  color: white;
+  padding: 12px 18px;
+  border-radius: 18px;
+  border-bottom-right-radius: 4px;
+  /* Generic tail effect */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  line-height: 1.5;
   max-width: 80%;
   white-space: pre-wrap;
+  margin-left: auto;
+  /* Right align */
+  font-size: 15px;
+}
+
+.assistant-message .message-content {
+  background: #E9E9EB;
+  /* Apple Gray */
+  color: #000;
+  padding: 12px 18px;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  /* Generic tail effect */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
+  max-width: 90%;
+}
+
+.assistant-message {
+  align-items: flex-start;
+}
+
+.user-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .loading-indicator {
