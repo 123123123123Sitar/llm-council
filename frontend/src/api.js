@@ -11,8 +11,13 @@ export const api = {
   async listConversations() {
     const response = await fetch(`${API_BASE}/api/conversations`);
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to list conversations');
+      const text = await response.text();
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || 'Failed to list conversations');
+      } catch (e) {
+        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      }
     }
     return response.json();
   },
@@ -29,8 +34,13 @@ export const api = {
       body: JSON.stringify({}),
     });
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to create conversation');
+      const text = await response.text();
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || 'Failed to create conversation');
+      } catch (e) {
+        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      }
     }
     return response.json();
   },
@@ -43,8 +53,13 @@ export const api = {
       `${API_BASE}/api/conversations/${conversationId}`
     );
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to get conversation');
+      const text = await response.text();
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || 'Failed to get conversation');
+      } catch (e) {
+        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      }
     }
     return response.json();
   },
@@ -64,8 +79,13 @@ export const api = {
       }
     );
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to send message');
+      const text = await response.text();
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || 'Failed to send message');
+      } catch (e) {
+        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      }
     }
     return response.json();
   },
@@ -96,8 +116,13 @@ export const api = {
     );
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to send message');
+      const text = await response.text();
+      try {
+        const err = JSON.parse(text);
+        throw new Error(err.detail || 'Failed to send message');
+      } catch (e) {
+        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      }
     }
 
     const reader = response.body.getReader();
