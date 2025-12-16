@@ -38,29 +38,46 @@ async def query_model(
         "messages": messages
     }
 
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                OPENROUTER_API_URL,
-                json=payload,
-                headers=headers,
-                timeout=timeout
-            )
-            
-            if response.status_code != 200:
-                print(f"Error querying {model}: {response.status_code} - {response.text}")
-                return None
-            
-            data = response.json()
-            if not data or 'choices' not in data or not data['choices']:
-                print(f"Error querying {model}: Invalid response format - {data}")
-                return None
+    retries = 3
+    base_delay = 2
+
+    for attempt in range(retries):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    OPENROUTER_API_URL,
+                    json=payload,
+                    headers=headers,
+                    timeout=timeout
+                )
                 
-            return data["choices"][0]["message"]
-            
-    except Exception as e:
-        print(f"Exception querying {model}: {e}")
-        return None
+                if response.status_code == 429:
+                    if attempt < retries - 1:
+                        import asyncio
+                        wait_time = base_delay * (2 ** attempt)
+                        print(f"Rate limited on {model}, retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                
+                if response.status_code != 200:
+                    print(f"Error querying {model}: {response.status_code} - {response.text}")
+                    return None
+                
+                data = response.json()
+                if not data or 'choices' not in data or not data['choices']:
+                    print(f"Error querying {model}: Invalid response format - {data}")
+                    return None
+                    
+                return data["choices"][0]["message"]
+                
+        except Exception as e:
+            print(f"Exception querying {model}: {e}")
+            if attempt < retries - 1:
+                import asyncio
+                await asyncio.sleep(1)
+            else:
+                return None
+    return None
 
 
 async def query_models_parallel(
