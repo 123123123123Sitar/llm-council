@@ -11,7 +11,8 @@ export const api = {
   async listConversations() {
     const response = await fetch(`${API_BASE}/api/conversations`);
     if (!response.ok) {
-      throw new Error('Failed to list conversations');
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to list conversations');
     }
     return response.json();
   },
@@ -28,7 +29,8 @@ export const api = {
       body: JSON.stringify({}),
     });
     if (!response.ok) {
-      throw new Error('Failed to create conversation');
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create conversation');
     }
     return response.json();
   },
@@ -41,14 +43,12 @@ export const api = {
       `${API_BASE}/api/conversations/${conversationId}`
     );
     if (!response.ok) {
-      throw new Error('Failed to get conversation');
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to get conversation');
     }
     return response.json();
   },
 
-  /**
-   * Send a message in a conversation.
-   */
   /**
    * Send a message in a conversation.
    */
@@ -64,7 +64,8 @@ export const api = {
       }
     );
     if (!response.ok) {
-      throw new Error('Failed to send message');
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to send message');
     }
     return response.json();
   },
@@ -95,7 +96,8 @@ export const api = {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to send message');
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to send message');
     }
 
     const reader = response.body.getReader();
