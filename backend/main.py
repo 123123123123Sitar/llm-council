@@ -32,6 +32,7 @@ class CreateConversationRequest(BaseModel):
 class SendMessageRequest(BaseModel):
     """Request to send a message in a conversation."""
     content: str
+    images: Optional[List[str]] = None
 
 
 class ConversationMetadata(BaseModel):
@@ -48,6 +49,20 @@ class Conversation(BaseModel):
     created_at: str
     title: str
     messages: List[Dict[str, Any]]
+
+
+def create_multimodal_content(text: str, images: Optional[List[str]]) -> Any:
+    """Create multimodal content structure for LLMs."""
+    if not images:
+        return text
+    
+    content = [{"type": "text", "text": text}]
+    for img in images:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": img}  # Expecting full data URI or URL
+        })
+    return content
 
 
 @app.get("/")
@@ -93,8 +108,11 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0
 
+    # Prepare content (multimodal if images present)
+    user_content = create_multimodal_content(request.content, request.images)
+
     # Add user message
-    storage.add_user_message(conversation_id, request.content)
+    storage.add_user_message(conversation_id, user_content)
 
     # If this is the first message, generate a title
     if is_first_message:
@@ -103,7 +121,8 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
     # Run the 3-stage council process
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content
+        user_content,
+        original_text_query=request.content  # Explicitly pass text for title/ranking formatting
     )
 
     # Add assistant message with all stages
@@ -139,8 +158,11 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
     async def event_generator():
         try:
+            # Prepare content (multimodal if images present)
+            user_content = create_multimodal_content(request.content, request.images)
+
             # Add user message
-            storage.add_user_message(conversation_id, request.content)
+            storage.add_user_message(conversation_id, user_content)
 
             # Start title generation in parallel (don't await yet)
             title_task = None
@@ -149,18 +171,27 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content)
+            stage1_results = await stage1_collect_responses(user_content)
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results)
+            
+            # Use original text query for ranking context to avoid passing huge image blobs
+            stage2_results, label_to_model = await stage2_collect_rankings(
+                request.content, 
+                stage1_results
+            )
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results)
+            stage3_result = await stage3_synthesize_final(
+                request.content, 
+                stage1_results, 
+                stage2_results
+            )
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started

@@ -5,12 +5,12 @@ from .openrouter import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
 
-async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
+async def stage1_collect_responses(user_query: Any) -> List[Dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
 
     Args:
-        user_query: The user's question
+        user_query: The user's question (str or list of content parts)
 
     Returns:
         List of dicts with 'model' and 'response' keys
@@ -40,7 +40,7 @@ async def stage2_collect_rankings(
     Stage 2: Each model ranks the anonymized responses.
 
     Args:
-        user_query: The original user query
+        user_query: The original user query (TEXT ONLY)
         stage1_results: Results from Stage 1
 
     Returns:
@@ -121,7 +121,7 @@ async def stage3_synthesize_final(
     Stage 3: Chairman synthesizes final response.
 
     Args:
-        user_query: The original user query
+        user_query: The original user query (TEXT ONLY)
         stage1_results: Individual model responses from Stage 1
         stage2_results: Rankings from Stage 2
 
@@ -293,17 +293,24 @@ Title:"""
     return title
 
 
-async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
+async def run_full_council(
+    user_query: Any,
+    original_text_query: str = None
+) -> Tuple[List, List, Dict, Dict]:
     """
     Run the complete 3-stage council process.
 
     Args:
-        user_query: The user's question
+        user_query: The user's question (str or multimodal list)
+        original_text_query: The text-only version of query for stages 2/3
 
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
-    # Stage 1: Collect individual responses
+    # Use original_text_query if provided, otherwise assume user_query is string
+    text_query = original_text_query if original_text_query else str(user_query)
+
+    # Stage 1: Collect individual responses (uses full multimodal query)
     stage1_results = await stage1_collect_responses(user_query)
 
     # If no models responded successfully, return error
@@ -313,15 +320,15 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
             "response": "All models failed to respond. Please try again."
         }, {}
 
-    # Stage 2: Collect rankings
-    stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results)
+    # Stage 2: Collect rankings (uses text query for context)
+    stage2_results, label_to_model = await stage2_collect_rankings(text_query, stage1_results)
 
     # Calculate aggregate rankings
     aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
 
-    # Stage 3: Synthesize final answer
+    # Stage 3: Synthesize final answer (uses text query for context)
     stage3_result = await stage3_synthesize_final(
-        user_query,
+        text_query,
         stage1_results,
         stage2_results
     )

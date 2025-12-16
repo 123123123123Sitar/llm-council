@@ -11,7 +11,9 @@ export default function ChatInterface({
   isLoading,
 }) {
   const [input, setInput] = useState('');
+  const [images, setImages] = useState([]); // Array of base64 strings
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,13 +21,14 @@ export default function ChatInterface({
 
   useEffect(() => {
     scrollToBottom();
-  }, [conversation]);
+  }, [conversation, images]); // Scroll when images change too
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (input.trim() && !isLoading) {
-      onSendMessage(input);
+    if ((input.trim() || images.length > 0) && !isLoading) {
+      onSendMessage(input, images);
       setInput('');
+      setImages([]);
     }
   };
 
@@ -35,6 +38,25 @@ export default function ChatInterface({
       e.preventDefault();
       handleSubmit(e);
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImages(prev => [...prev, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset input so same file can be selected again
+    e.target.value = null;
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!conversation) {
@@ -63,6 +85,13 @@ export default function ChatInterface({
                 <div className="user-message">
                   <div className="message-label">You</div>
                   <div className="message-content">
+                    {msg.images && msg.images.length > 0 && (
+                      <div className="message-images">
+                        {msg.images.map((img, i) => (
+                          <img key={i} src={img} alt="User upload" />
+                        ))}
+                      </div>
+                    )}
                     <div className="markdown-content">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
@@ -120,8 +149,40 @@ export default function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {conversation.messages.length === 0 && (
+      <div className="input-area">
+        {images.length > 0 && (
+          <div className="image-preview-area">
+            {images.map((img, index) => (
+              <div key={index} className="image-preview-item">
+                <img src={img} alt="Preview" />
+                <button
+                  className="remove-image-btn"
+                  onClick={() => removeImage(index)}
+                >×</button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <form className="input-form" onSubmit={handleSubmit}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+            multiple
+            accept="image/*"
+          />
+          <button
+            type="button"
+            className="attach-button"
+            onClick={() => fileInputRef.current?.click()}
+            title="Attach images"
+            disabled={isLoading}
+          >
+            📎
+          </button>
+
           <textarea
             className="message-input"
             placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"
@@ -129,17 +190,17 @@ export default function ChatInterface({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            rows={3}
+            rows={1} // Auto-resize would be better but simple for now
           />
           <button
             type="submit"
             className="send-button"
-            disabled={!input.trim() || isLoading}
+            disabled={(!input.trim() && images.length === 0) || isLoading}
           >
             Send
           </button>
         </form>
-      )}
+      </div>
     </div>
   );
 }
